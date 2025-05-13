@@ -111,5 +111,3 @@ Contributions are welcome! Please open issues and pull requests for bug fixes or
 ## Acknowledgements
 
 - Inspired by the need for flexible, pluggable storage solutions in modern Python applications.
-
----
