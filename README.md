@@ -33,9 +33,9 @@ Depending on the storage backend(s) you want to use, you can install optional de
   ```sh
   uv sync --extra s3
   ```
-- **Both:**
+- **All:**
   ```sh
-  uv sync --extra gcs,s3
+  uv sync --all-extras
   ```
 
 ---
