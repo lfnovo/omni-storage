@@ -2,9 +2,7 @@
 import os
 
 from .base import Storage
-from .gcs import GCSStorage
 from .local import LocalStorage
-from .s3 import S3Storage
 
 
 def get_storage() -> Storage:
@@ -21,6 +19,7 @@ def get_storage() -> Storage:
     """
     s3_bucket = os.getenv('AWS_S3_BUCKET')
     if s3_bucket:
+        from .s3 import S3Storage  # Lazy import S3Storage
         region = os.getenv('AWS_REGION')
         if region:
             return S3Storage(s3_bucket, region_name=region)
@@ -28,6 +27,7 @@ def get_storage() -> Storage:
 
     gcs_bucket = os.getenv('GCS_BUCKET')
     if gcs_bucket:
+        from .gcs import GCSStorage  # Lazy import GCSStorage
         return GCSStorage(gcs_bucket)
 
     data_dir = os.getenv('DATADIR', './data')
