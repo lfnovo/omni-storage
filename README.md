@@ -44,16 +44,27 @@ Depending on the storage backend(s) you want to use, you can install optional de
 
 ### Selecting the Storage Backend
 
-- **Amazon S3**: Set the `AWS_S3_BUCKET` environment variable to your S3 bucket name. Optionally set `AWS_REGION` for your region. AWS credentials must be available in your environment (see [boto3 docs](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html)).
-- **Google Cloud Storage**: Set the `GCS_BUCKET` environment variable to the name of your GCS bucket.
-- **Local Filesystem**: Set the `DATADIR` environment variable to the desired directory (defaults to `./data` if unset).
+Omni Storage can determine the appropriate backend in two ways:
+
+1.  **Explicitly via `storage_type` parameter**: You can pass `storage_type="s3"`, `storage_type="gcs"`, or `storage_type="local"` to the `get_storage()` function.
+2.  **Automatically via Environment Variables**: If `storage_type` is not provided, the backend is chosen based on the following environment variables:
+    -   **Amazon S3**: Set the `AWS_S3_BUCKET` environment variable to your S3 bucket name. Optionally set `AWS_REGION` for your region. AWS credentials must be available in your environment (see [boto3 docs](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html)).
+    -   **Google Cloud Storage**: Set the `GCS_BUCKET` environment variable to the name of your GCS bucket.
+    -   **Local Filesystem**: Set the `DATADIR` environment variable to the desired directory (defaults to `./data` if unset).
+
+Even when `storage_type` is specified, the relevant environment variables (e.g., `AWS_S3_BUCKET` for S3) are still required for configuration.
 
 ### Example
 
 ```python
 from omni_storage.factory import get_storage
 
-storage = get_storage()
+# Automatically detect backend from environment variables
+# storage = get_storage()
+
+# Or, explicitly specify the backend (e.g., S3)
+# Ensure AWS_S3_BUCKET (and optionally AWS_REGION) are set in your environment
+storage = get_storage(storage_type="s3")
 
 # Save a file
 with open('example.txt', 'rb') as f:
@@ -91,8 +102,9 @@ print(url)
 
 ### Factory
 
-- `get_storage() -> Storage`
-    - Returns a storage instance based on environment variables.
+- `get_storage(storage_type: Optional[Literal["s3", "gcs", "local"]] = None) -> Storage`
+    - Returns a storage instance. If `storage_type` is provided (e.g., "s3", "gcs", "local"),
+      it determines the backend. Otherwise, the choice is based on environment variables.
 
 ---
 
