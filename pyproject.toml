@@ -1,0 +1,17 @@
+[project]
+name = "omni-storage"
+version = "0.1.0"
+description = "A unified Python interface for file storage."
+readme = "README.md"
+authors = [
+    { name = "LUIS NOVO", email = "lfnovo@gmail.com" }
+]
+requires-python = ">=3.10.6"
+dependencies = []
+
+[project.scripts]
+omni-storage = "omni_storage:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
