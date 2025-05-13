@@ -26,7 +26,7 @@ jobs:
       run: |
         uv venv
         rm -rf dist
-        uv pip install -e ".[gcs,s3]"
+        uv sync
 
     - name: Build package
       run: uv build
