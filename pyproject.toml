@@ -6,12 +6,60 @@ readme = "README.md"
 authors = [
     { name = "LUIS NOVO", email = "lfnovo@gmail.com" }
 ]
-requires-python = ">=3.10.6"
-dependencies = []
+requires-python = ">=3.9,<3.14"
+license = { text = "MIT" }
+keywords = ["s3", "storage", "gcs", "google-cloud-storage", "boto3", "amazon-s3"]
+
+[project.urls]
+repository = "https://github.com/lfnovo/omni-storage"
+homepage = "https://github.com/lfnovo/omni-storage"
+documentation = "https://github.com/lfnovo/omni-storage#readme"
+
+
 
 [project.scripts]
 omni-storage = "omni_storage:main"
 
+[project.optional-dependencies]
+gcs = ["google-cloud-storage>=2.16.0"]
+s3 = ["boto3>=1.28.0"]
+test = [
+    "boto3>=1.28.0",
+    "google-cloud-storage>=2.16.0",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pytest-asyncio>=0.25.3",
+    "pytest-mock>=3.14.0",
+    "Faker>=26.0.0",
+    "anyio>=3.7.1"
+]
+dev = [
+    "omni-storage[test]",
+    "ruff>=0.8.4",
+]
+
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "pip"]
 build-backend = "hatchling.build"
+
+[tool.setuptools]
+package-dir = {"omni_storage" = "src/omni_storage"}
+
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=omni_storage --cov-report=term-missing"
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
+
+[tool.isort]
+profile = "black"
+line-length = 88
