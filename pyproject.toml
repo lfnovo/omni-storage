@@ -1,6 +1,6 @@
 [project]
 name = "omni-storage"
-version = "0.2.0"
+version = "0.2.1"
 description = "A unified Python interface for file storage."
 readme = "README.md"
 authors = [
@@ -63,3 +63,9 @@ ignore = ["E501"]
 [tool.isort]
 profile = "black"
 line-length = 88
+
+[dependency-groups]
+dev = [
+    "ipykernel>=6.29.5",
+    "ipywidgets>=8.1.7",
+]

@@ -6,7 +6,11 @@ A unified Python interface for file storage, supporting local filesystem, Google
 
 ## Features
 
-- **Unified API**: Save, read, and retrieve URLs for files, regardless of backend.
+- **Unified Storage Interface**: Use the same API to interact with Local Filesystem, Google Cloud Storage, and Amazon S3.
+- **File Operations**: Save and read files as bytes or file-like objects.
+- **URL Generation**: Get URLs for files stored in any of the supported storage systems.
+- **File Upload**: Upload files directly from local file paths to the storage system.
+- **Existence Check**: Check if a file exists in the storage system.
 - **Backend Flexibility**: Seamlessly switch between local, GCS, and S3 storage by setting environment variables.
 - **Extensible**: Add new storage backends by subclassing the `Storage` abstract base class.
 - **Factory Pattern**: Automatically selects the appropriate backend at runtime.
@@ -90,6 +94,10 @@ print(url)
     - Read file data from storage.
 - `get_file_url(file_path: str) -> str`
     - Get a URL or path to access the file.
+- `upload_file(local_path: str, destination_path: str) -> str`
+    - Upload a file from a local path to storage.
+- `exists(file_path: str) -> bool`
+    - Check if a file exists in storage.
 
 ### Implementations
 

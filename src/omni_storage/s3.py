@@ -47,3 +47,34 @@ class S3Storage(Storage):
     def get_file_url(self, file_path: str) -> str:
         """Get S3 URL for file."""
         return f"s3://{self.bucket_name}/{file_path}"
+
+    def upload_file(self, file_path: str, destination_path: str) -> str:
+        """
+        Upload a file from the local file system to Amazon S3.
+
+        Args:
+            file_path (str): The path to the local file to upload.
+            destination_path (str): The path in S3 where the file should be saved.
+
+        Returns:
+            str: The path of the saved file in S3.
+        """
+        with open(file_path, "rb") as file_obj:
+            self.s3.upload_fileobj(file_obj, self.bucket_name, destination_path)
+        return destination_path
+
+    def exists(self, file_path: str) -> bool:
+        """
+        Check if a file exists in Amazon S3.
+
+        Args:
+            file_path (str): The path of the file in S3.
+
+        Returns:
+            bool: True if the file exists, False otherwise.
+        """
+        try:
+            self.s3.head_object(Bucket=self.bucket_name, Key=file_path)
+            return True
+        except Exception:
+            return False
