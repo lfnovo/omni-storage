@@ -44,42 +44,166 @@ Depending on the storage backend(s) you want to use, you can install optional de
 
 ---
 
-## Usage
+## Storage Provider Setup
 
-### Selecting the Storage Backend
+### Local Filesystem Storage
+
+The simplest storage option, ideal for development and testing.
+
+**Required Environment Variables:**
+- `DATADIR` (optional): Directory path for file storage. Defaults to `./data` if not set.
+
+**Example Setup:**
+```bash
+# Optional: Set custom data directory
+export DATADIR="/path/to/your/data"
+
+# Or use default ./data directory (no setup needed)
+```
+
+**Usage:**
+```python
+from omni_storage.factory import get_storage
+
+# Automatic detection (when only DATADIR is set)
+storage = get_storage()
+
+# Or explicit selection
+storage = get_storage(storage_type="local")
+```
+
+### Amazon S3 Storage
+
+Store files in Amazon S3 buckets with full AWS integration.
+
+**Required Environment Variables:**
+- `AWS_S3_BUCKET`: Your S3 bucket name
+- `AWS_REGION` (optional): AWS region (e.g., "us-east-1")
+
+**AWS Credentials:** Must be configured via one of these methods:
+- Environment variables: `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`
+- AWS credentials file: `~/.aws/credentials`
+- IAM roles (when running on AWS infrastructure)
+- See [boto3 credentials documentation](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html) for all options
+
+**Example Setup:**
+```bash
+# Required: S3 bucket name
+export AWS_S3_BUCKET="my-storage-bucket"
+
+# Optional: AWS region
+export AWS_REGION="us-west-2"
+
+# AWS credentials (if not using IAM roles or credentials file)
+export AWS_ACCESS_KEY_ID="your-access-key"
+export AWS_SECRET_ACCESS_KEY="your-secret-key"
+```
+
+**Usage:**
+```python
+from omni_storage.factory import get_storage
+
+# Automatic detection (when AWS_S3_BUCKET is set)
+storage = get_storage()
+
+# Or explicit selection
+storage = get_storage(storage_type="s3")
+```
+
+### Google Cloud Storage (GCS)
+
+Store files in Google Cloud Storage buckets.
+
+**Required Environment Variables:**
+- `GCS_BUCKET`: Your GCS bucket name
+
+**GCS Authentication:** Must be configured via one of these methods:
+- Service account key file: Set `GOOGLE_APPLICATION_CREDENTIALS` environment variable
+- Application Default Credentials (ADC) when running on Google Cloud
+- gcloud CLI authentication for local development
+- See [Google Cloud authentication documentation](https://cloud.google.com/docs/authentication/application-default-credentials) for details
+
+**Example Setup:**
+```bash
+# Required: GCS bucket name
+export GCS_BUCKET="my-gcs-bucket"
+
+# Authentication via service account (most common)
+export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account-key.json"
+
+# Or authenticate via gcloud CLI for development
+gcloud auth application-default login
+```
+
+**Usage:**
+```python
+from omni_storage.factory import get_storage
+
+# Automatic detection (when GCS_BUCKET is set)
+storage = get_storage()
+
+# Or explicit selection
+storage = get_storage(storage_type="gcs")
+```
+
+## Backend Selection Logic
 
 Omni Storage can determine the appropriate backend in two ways:
 
-1.  **Explicitly via `storage_type` parameter**: You can pass `storage_type="s3"`, `storage_type="gcs"`, or `storage_type="local"` to the `get_storage()` function.
-2.  **Automatically via Environment Variables**: If `storage_type` is not provided, the backend is chosen based on the following environment variables:
-    -   **Amazon S3**: Set the `AWS_S3_BUCKET` environment variable to your S3 bucket name. Optionally set `AWS_REGION` for your region. AWS credentials must be available in your environment (see [boto3 docs](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html)).
-    -   **Google Cloud Storage**: Set the `GCS_BUCKET` environment variable to the name of your GCS bucket.
-    -   **Local Filesystem**: Set the `DATADIR` environment variable to the desired directory (defaults to `./data` if unset).
+1. **Explicitly via `storage_type` parameter**: Pass `storage_type="s3"`, `storage_type="gcs"`, or `storage_type="local"` to `get_storage()`
+2. **Automatically via Environment Variables**: If `storage_type` is not provided, the backend is chosen based on which environment variables are set:
+   - If `AWS_S3_BUCKET` is set → S3 storage
+   - If `GCS_BUCKET` is set → GCS storage
+   - Otherwise → Local storage (using `DATADIR` or default `./data`)
 
-Even when `storage_type` is specified, the relevant environment variables (e.g., `AWS_S3_BUCKET` for S3) are still required for configuration.
+**Note:** Even when using explicit selection, the relevant environment variables for that backend must still be set.
 
-### Example
+## Usage Examples
+
+### Basic Operations
 
 ```python
 from omni_storage.factory import get_storage
 
-# Automatically detect backend from environment variables
-# storage = get_storage()
+# Get storage instance (auto-detect from environment)
+storage = get_storage()
 
-# Or, explicitly specify the backend (e.g., S3)
-# Ensure AWS_S3_BUCKET (and optionally AWS_REGION) are set in your environment
-storage = get_storage(storage_type="s3")
+# Save a file from bytes
+data = b"Hello, World!"
+storage.save_file(data, 'hello.txt')
 
-# Save a file
-with open('example.txt', 'rb') as f:
-    storage.save_file(f, 'uploads/example.txt')
+# Save a file from file-like object
+with open('local_file.txt', 'rb') as f:
+    storage.save_file(f, 'uploads/remote_file.txt')
 
 # Read a file
-data = storage.read_file('uploads/example.txt')
+content = storage.read_file('uploads/remote_file.txt')
+print(content.decode('utf-8'))
+
+# Upload a file directly from path
+storage.upload_file('/path/to/local/file.pdf', 'documents/file.pdf')
+
+# Check if file exists
+if storage.exists('documents/file.pdf'):
+    print("File exists!")
 
 # Get file URL
-url = storage.get_file_url('uploads/example.txt')
-print(url)
+url = storage.get_file_url('documents/file.pdf')
+print(f"File URL: {url}")
+```
+
+### Provider-Specific Examples
+
+```python
+# Force specific storage backend
+s3_storage = get_storage(storage_type="s3")      # Requires AWS_S3_BUCKET
+gcs_storage = get_storage(storage_type="gcs")     # Requires GCS_BUCKET
+local_storage = get_storage(storage_type="local") # Uses DATADIR or ./data
+
+# URLs differ by provider:
+# - S3: https://bucket-name.s3.region.amazonaws.com/path/to/file
+# - GCS: https://storage.googleapis.com/bucket-name/path/to/file
+# - Local: file:///absolute/path/to/file
 ```
 
 ---
