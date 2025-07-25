@@ -1,9 +1,10 @@
 """Local filesystem storage implementation."""
 
 from pathlib import Path
-from typing import BinaryIO, Union
+from typing import BinaryIO, Literal, Union
 
 from .base import Storage
+from .types import AppendResult
 
 
 class LocalStorage(Storage):
@@ -80,3 +81,76 @@ class LocalStorage(Storage):
         """
         full_path = self._get_full_path(file_path)
         return full_path.exists()
+
+    def append_file(
+        self,
+        content: Union[str, bytes, BinaryIO],
+        filename: str,
+        create_if_not_exists: bool = True,
+        strategy: Literal["auto", "single", "multipart"] = "auto",
+        part_size_mb: int = 100,
+    ) -> AppendResult:
+        """
+        Append content to a file using native filesystem append.
+
+        LocalStorage always uses the "single" strategy since the filesystem
+        supports native append operations efficiently.
+
+        Args:
+            content: Content to append (str, bytes, or file-like object)
+            filename: Path to the file to append to
+            create_if_not_exists: If True, creates file if it doesn't exist
+            strategy: Ignored for LocalStorage (always uses "single")
+            part_size_mb: Ignored for LocalStorage
+
+        Returns:
+            AppendResult with details of the operation
+
+        Raises:
+            FileNotFoundError: If file doesn't exist and create_if_not_exists=False
+        """
+        full_path = self._get_full_path(filename)
+
+        # Check if file exists
+        if not full_path.exists() and not create_if_not_exists:
+            raise FileNotFoundError(f"File {filename} does not exist")
+
+        # Ensure parent directory exists
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Handle different content types and write
+        bytes_written = 0
+
+        if isinstance(content, str):
+            # Text content - append in text mode
+            with open(full_path, "a", encoding="utf-8") as f:
+                f.write(content)
+                bytes_written = len(content.encode("utf-8"))
+        elif isinstance(content, bytes):
+            # Binary content - append in binary mode
+            with open(full_path, "ab") as f:
+                f.write(content)
+                bytes_written = len(content)
+        else:
+            # File-like object - read and append in binary mode
+            with open(full_path, "ab") as f:
+                # Read content from file-like object
+                if hasattr(content, "read"):
+                    data = content.read()
+                    if isinstance(data, str):
+                        # Handle StringIO
+                        data = data.encode("utf-8")
+                    f.write(data)
+                    bytes_written = len(data)
+                else:
+                    raise ValueError(
+                        f"Content type {type(content)} is not supported. "
+                        "Must be str, bytes, or file-like object with read() method."
+                    )
+
+        return AppendResult(
+            path=str(full_path),
+            bytes_written=bytes_written,
+            strategy_used="single",
+            parts_count=1,
+        )

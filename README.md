@@ -7,7 +7,8 @@ A unified Python interface for file storage, supporting local filesystem, Google
 ## Features
 
 - **Unified Storage Interface**: Use the same API to interact with Local Filesystem, Google Cloud Storage, and Amazon S3.
-- **File Operations**: Save and read files as bytes or file-like objects.
+- **File Operations**: Save, read, and append to files as bytes or file-like objects.
+- **Efficient Append**: Smart append operations that use native filesystem append for local storage and multi-part patterns for cloud storage.
 - **URL Generation**: Get URLs for files stored in any of the supported storage systems.
 - **File Upload**: Upload files directly from local file paths to the storage system.
 - **Existence Check**: Check if a file exists in the storage system.
@@ -192,6 +193,53 @@ url = storage.get_file_url('documents/file.pdf')
 print(f"File URL: {url}")
 ```
 
+### Appending to Files
+
+The `append_file` method allows you to efficiently add content to existing files:
+
+```python
+from omni_storage.factory import get_storage
+
+storage = get_storage()
+
+# Append text to a file
+storage.append_file("Line 1\n", "log.txt")
+storage.append_file("Line 2\n", "log.txt")
+
+# Append binary data
+binary_data = b"\x00\x01\x02\x03"
+storage.append_file(binary_data, "data.bin")
+
+# Append from file-like objects
+from io import StringIO, BytesIO
+
+text_buffer = StringIO("Buffered text content\n")
+storage.append_file(text_buffer, "output.txt")
+
+bytes_buffer = BytesIO(b"Binary buffer content")
+storage.append_file(bytes_buffer, "binary_output.bin")
+
+# Streaming large CSV data 
+import csv
+from io import StringIO
+
+# Simulate streaming data from a database
+for batch in fetch_large_dataset():
+    csv_buffer = StringIO()
+    writer = csv.writer(csv_buffer)
+    writer.writerows(batch)
+    
+    # Append CSV data efficiently
+    csv_buffer.seek(0)
+    storage.append_file(csv_buffer, "large_dataset.csv")
+```
+
+**Cloud Storage Optimization**: For S3 and GCS, append operations intelligently choose between:
+- **Single-file strategy**: For small files, downloads existing content, appends new data, and re-uploads
+- **Multi-part strategy**: For large files (>100MB by default), creates separate part files and a manifest for efficient streaming
+
+The multi-part pattern is transparent to users - when you read a file, it automatically handles both single files and multi-part files seamlessly.
+
 ### Provider-Specific Examples
 
 ```python
@@ -222,6 +270,9 @@ local_storage = get_storage(storage_type="local") # Uses DATADIR or ./data
     - Upload a file from a local path to storage.
 - `exists(file_path: str) -> bool`
     - Check if a file exists in storage.
+- `append_file(content: Union[str, bytes, BinaryIO], filename: str, create_if_not_exists: bool = True, strategy: Literal["auto", "single", "multipart"] = "auto", part_size_mb: int = 100) -> AppendResult`
+    - Append content to an existing file or create a new one.
+    - Returns `AppendResult` with: `path`, `bytes_written`, `strategy_used`, and `parts_count`.
 
 ### Implementations
 
