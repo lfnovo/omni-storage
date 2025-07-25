@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.0] - 2025-07-25
+## [0.3.0]
 
 ### Added
 - `append_file` method to all storage backends for efficient file appending
@@ -24,23 +24,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced `read_file` method in S3Storage and GCSStorage to transparently handle multi-part files
 - Updated type hints to include new append-related types
 
-## [0.2.1] - 2024-01-20
+## [0.2.1]
 
 ### Fixed
 - Minor bug fixes and improvements
 
-## [0.2.0] - 2024-01-18
+## [0.2.0]
 
 ### Added
 - `storage_type` parameter to `get_storage` for explicit backend selection
 
-## [0.1.3] - 2024-01-15
+## [0.1.3]
 
 ### Added
 - py.typed file for full type checking support
 - Lazy loading of storage providers to prevent ModuleNotFoundError
 
-## [0.1.0] - Initial Release
+## [0.1.0]
 
 ### Added
 - Unified storage interface for Local, S3, and GCS
