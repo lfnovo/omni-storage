@@ -1,4 +1,5 @@
 """Storage factory for creating storage instances."""
+
 import os
 from typing import Literal, Optional
 
@@ -6,7 +7,9 @@ from .base import Storage
 from .local import LocalStorage
 
 
-def get_storage(storage_type: Optional[Literal["s3", "gcs", "local"]] = None) -> Storage:
+def get_storage(
+    storage_type: Optional[Literal["s3", "gcs", "local"]] = None,
+) -> Storage:
     """Get storage instance.
 
     If `storage_type` is provided (e.g., "s3", "gcs", "local"), it determines the backend.
@@ -42,35 +45,43 @@ def get_storage(storage_type: Optional[Literal["s3", "gcs", "local"]] = None) ->
         chosen_type = storage_type
     else:
         # Auto-detection logic based on environment variables
-        if os.getenv('AWS_S3_BUCKET'):
+        if os.getenv("AWS_S3_BUCKET"):
             chosen_type = "s3"
-        elif os.getenv('GCS_BUCKET'):
+        elif os.getenv("GCS_BUCKET"):
             chosen_type = "gcs"
         else:
-            chosen_type = "local"  # Default to local if no specific cloud env vars found
+            chosen_type = (
+                "local"  # Default to local if no specific cloud env vars found
+            )
 
     if chosen_type == "s3":
-        s3_bucket = os.getenv('AWS_S3_BUCKET')
+        s3_bucket = os.getenv("AWS_S3_BUCKET")
         if not s3_bucket:
-            raise ValueError("AWS_S3_BUCKET environment variable is required for S3 storage.")
+            raise ValueError(
+                "AWS_S3_BUCKET environment variable is required for S3 storage."
+            )
         from .s3 import S3Storage  # Lazy import S3Storage
-        region = os.getenv('AWS_REGION')
+
+        region = os.getenv("AWS_REGION")
         if region:
             return S3Storage(s3_bucket, region_name=region)
         return S3Storage(s3_bucket)
 
     elif chosen_type == "gcs":
-        gcs_bucket = os.getenv('GCS_BUCKET')
+        gcs_bucket = os.getenv("GCS_BUCKET")
         if not gcs_bucket:
-            raise ValueError("GCS_BUCKET environment variable is required for GCS storage.")
+            raise ValueError(
+                "GCS_BUCKET environment variable is required for GCS storage."
+            )
         from .gcs import GCSStorage  # Lazy import GCSStorage
+
         return GCSStorage(gcs_bucket)
 
     elif chosen_type == "local":
-        data_dir = os.getenv('DATADIR', './data')
+        data_dir = os.getenv("DATADIR", "./data")
         # LocalStorage is already imported at the top
         return LocalStorage(data_dir)
-    
+
     # This part should ideally not be reached if logic is correct and chosen_type is always set.
     # Adding a fallback error for robustness.
     raise RuntimeError("Could not determine storage type. This should not happen.")
